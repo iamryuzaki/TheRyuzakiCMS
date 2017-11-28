@@ -1,2 +1,0 @@
-# TheRyuzakiCMS
-PHP CMS
