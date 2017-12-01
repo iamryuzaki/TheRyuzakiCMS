@@ -13,7 +13,8 @@ class ApplicationManager {
     public static function InitializationTemplate() {
         $GLOBALS['Engine']['Template']['Template'] = '';
         $GLOBALS['Engine']['Template']['Content'] = '';
-        
+        ScriptManager::CallHook('OnInitializationTemplate');
+
         ob_start();
         if (is_file('./Public/System/' . $GLOBALS['Engine']['System'] . '/Template/main.php')) {
             if (is_file('./Public/System/' . $GLOBALS['Engine']['System'] . '/Template/header.php'))
@@ -27,26 +28,45 @@ class ApplicationManager {
         } else
             ScriptManager::CallHook('OnInitializationTemplate_NoTemplate');
         $GLOBALS['Engine']['Template']['Template'] = ob_get_clean();
-        
+
         ScriptManager::CallHook('OnInitializationTemplateFinish');
     }
 
     private static function InitializationContent() {
+        ScriptManager::CallHook('OnInitializationContent');
         $path = '';
         foreach ($GLOBALS['Engine']['GET'] as $k => $v) {
             $path .= '/' . $v;
-            if ($k + 1 == count($GLOBALS['Engine']['GET'])) {
+
+            $config = array();
+            if (is_file('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/config.json'))
+                $config = json_decode(file_get_contents('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/config.json'), true);
+            ScriptManager::CallHook('OnContentLoadingTick', array($path, $v, $config));
+
+            if (isset($config['dourl']) and is_array($config['dourl'])) {
+                $config['curent'] = true;
+                $out = count($GLOBALS['Engine']['GET']) - $k;
+                $v = $config['dourl'][(((count($config['dourl']) < $out) ? count($config['dourl']) : $out) - 1)];
+                $path .= '/' . $v;
+            }
+
+            if (isset($config['curent_header']) and is_file('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/header.php'))
+                $GLOBALS['Engine']['Template']['Content'] .= file_get_contents('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/header.php');
+
+            if ($k + 1 == count($GLOBALS['Engine']['GET']) || isset($config['curent'])) {
+                ScriptManager::CallHook('OnContentLoaded', array($path, $v, $config));
                 if (is_file('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/' . $v . '.php')) {
-                    if (is_file('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/header.php'))
+                    if (isset($config['curent_header']) == false and is_file('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/header.php'))
                         $GLOBALS['Engine']['Template']['Content'] .= file_get_contents('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/header.php');
                     $GLOBALS['Engine']['Template']['Content'] .= file_get_contents('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/' . $v . '.php');
                     if (is_file('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/footer.php'))
                         $GLOBALS['Engine']['Template']['Content'] .= file_get_contents('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/footer.php');
                 } else {
                     $GLOBALS['Engine']['Template']['Content'] = '';
-                    ScriptManager::CallHook('OnContentLoading_NoContent', array($path, $v));
+                    ScriptManager::CallHook('OnContentLoaded_NoContent', array($path, $v, $config));
                 }
-                ScriptManager::CallHook('OnContentLoadingFinish', array($path, $v));
+                ScriptManager::CallHook('OnContentLoadedFinish', array($path, $v, $config));
+                break;
             }
         }
         if ($GLOBALS['Engine']['Template']['Content'] != '') {
@@ -55,6 +75,11 @@ class ApplicationManager {
             $GLOBALS['Engine']['Template']['Content'] = ob_get_clean();
         }
         ScriptManager::CallHook('OnInitializationContentFinish');
+    }
+
+    public static function InitializationShutdown() {
+        ScriptManager::CallHook('OnInitializationShutdown');
+        die();
     }
 
     private static function InitializationRoute() {

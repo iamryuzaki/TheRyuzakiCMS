@@ -12,5 +12,6 @@ ApplicationManager::Initialization();
 ApplicationManager::Using('Environment.ScriptManager');
 ScriptManager::Initialization();
 ApplicationManager::InitializationTemplate();
-die($GLOBALS['Engine']['Template']['Template']);
+echo $GLOBALS['Engine']['Template']['Template'];
+ApplicationManager::InitializationShutdown(); 
 ?>
