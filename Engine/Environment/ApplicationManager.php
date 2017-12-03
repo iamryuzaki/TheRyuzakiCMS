@@ -6,6 +6,7 @@ if ($_SERVER['SCRIPT_NAME'] != '/index.php')
 class ApplicationManager {
 
     public static function Initialization() {
+        self::InitializationPreCheck();
         self::InitializationRoute();
         self::InitializationMysql();
     }
@@ -41,7 +42,7 @@ class ApplicationManager {
             $config = array();
             if (is_file('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/config.json'))
                 $config = json_decode(file_get_contents('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/config.json'), true);
-            ScriptManager::CallHook('OnContentLoadingTick', array($path, $v, $config));
+            ScriptManager::CallHook('OnContentLoadingTick', array(&$path, &$v, &$config));
 
             if (isset($config['dourl']) and is_array($config['dourl'])) {
                 $config['curent'] = true;
@@ -54,7 +55,7 @@ class ApplicationManager {
                 $GLOBALS['Engine']['Template']['Content'] .= file_get_contents('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/header.php');
 
             if ($k + 1 == count($GLOBALS['Engine']['GET']) || isset($config['curent'])) {
-                ScriptManager::CallHook('OnContentLoaded', array($path, $v, $config));
+                ScriptManager::CallHook('OnContentLoaded', array(&$path, &$v, &$config));
                 if (is_file('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/' . $v . '.php')) {
                     if (isset($config['curent_header']) == false and is_file('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/header.php'))
                         $GLOBALS['Engine']['Template']['Content'] .= file_get_contents('./Public/System/' . $GLOBALS['Engine']['System'] . '/Content' . $path . '/header.php');
@@ -65,7 +66,7 @@ class ApplicationManager {
                     $GLOBALS['Engine']['Template']['Content'] = '';
                     ScriptManager::CallHook('OnContentLoaded_NoContent', array($path, $v, $config));
                 }
-                ScriptManager::CallHook('OnContentLoadedFinish', array($path, $v, $config));
+                ScriptManager::CallHook('OnContentLoadedFinish', array(&$path, &$v, &$config));
                 break;
             }
         }
@@ -80,6 +81,14 @@ class ApplicationManager {
     public static function InitializationShutdown() {
         ScriptManager::CallHook('OnInitializationShutdown');
         die();
+    }
+    
+    private static function InitializationPreCheck() {
+        if (isset($_GET['route']) and $_GET['route'] == '/favicon.ico')
+        {
+            header("HTTP/1.1 404 Not Found");
+            die();
+        }
     }
 
     private static function InitializationRoute() {

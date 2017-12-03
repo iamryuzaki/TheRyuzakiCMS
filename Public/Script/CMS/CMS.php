@@ -1,7 +1,21 @@
 <?php
 class CMS {
-    public static function OnContentLoadingFailed($path, $name, $config) {
+    public static $Account = null;
+    public static $Session = null;
+    
+    public static function OnLoaded() {
+        include_once __DIR__.'/CMS_Session.php';
+        self::$Session = new CMS_Session();
+        include_once __DIR__.'/CMS_Account.php';
+        self::$Account = new CMS_Account();
+    }
+    
+    public static function OnContentLoaded_NoContent($path, $name, $config) {
         $GLOBALS['Engine']['Template']['Content'] = 'Error #404';
+    }
+    
+    public static function OnInitializationShutdown() {
+        self::$Session->OnSessionEnd();
     }
 }
 
