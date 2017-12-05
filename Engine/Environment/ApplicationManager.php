@@ -9,6 +9,14 @@ class ApplicationManager {
         self::InitializationPreCheck();
         self::InitializationRoute();
         self::InitializationMysql();
+        self::InitializationSettings();
+    }
+    
+    private static function InitializationSettings() {
+        $GLOBALS['Engine']['Settings'] = array();
+        $Res = $GLOBALS['Mysql']->getAll('SELECT `key`,`value` FROM `settings`');
+        foreach ($Res as $r) 
+            $GLOBALS['Engine']['Settings'][$r['key']] = $r['value'];
     }
 
     public static function InitializationTemplate() {

@@ -5,8 +5,8 @@ class CMS {
     
     public static function OnLoaded() {
         include_once __DIR__.'/CMS_Session.php';
-        self::$Session = new CMS_Session();
         include_once __DIR__.'/CMS_Account.php';
+        self::$Session = new CMS_Session();
         self::$Account = new CMS_Account();
     }
     
