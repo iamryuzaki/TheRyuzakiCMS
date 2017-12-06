@@ -20,6 +20,14 @@ class CMS_Account {
         $this->RunAuth();
     }
     
+    public function Registration($login, $email, $password, $phone = '', $active = true, $group = 1, $autoauth = false, $parent = 0) {
+        $GLOBALS['Mysql']->query('INSERT INTO `accounts` (`login`,`password`,`email`,`phone`,`group`,`session`,`active`) VALUES (?s,?s,?s,?s,?s,?s,?i)', $login, $this->GetPasswordDatabaseFormat($password), $email, $phone, $group, ($autoauth == true ? $_COOKIE['SID'] : ''), ($active ? 1 : 0));
+        $uid = $GLOBALS['Mysql']->getOne('SELECT LAST_INSERT_ID()');
+        $GLOBALS['Mysql']->query('INSERT INTO `accounts_information_registration` (`id_account`,`id_parent`,`login`,`email`,`useragent`,`time`,`ip`) VALUES (?s,?s,?s,?s,?s,NOW(),?s)', $uid, $parent, $login, $email, $_SERVER['HTTP_USER_AGENT'], $_SERVER['REMOTE_ADDR']);
+        if ($autoauth == true)
+            $this->RunAuth();
+    }
+    
     public function Logout() {
         if ($this->IsAuth()) {
             $GLOBALS['Mysql']->query('UPDATE `accounts` SET `session`=?s WHERE `id`=?s', '', $this->Data['id']);
